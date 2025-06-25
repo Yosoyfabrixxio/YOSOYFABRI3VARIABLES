@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8"> 
   <title>Graficador de Sistema con 3 Desigualdades</title>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <style>
