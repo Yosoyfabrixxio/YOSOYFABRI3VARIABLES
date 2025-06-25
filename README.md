@@ -2,99 +2,90 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Graficador 3D de Desigualdades</title>
+  <title>Graficador de Sistema con 3 Desigualdades</title>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #ecf0f1;
-      padding: 0;
+      background: #f4f6f9;
       margin: 0;
+      padding: 20px;
     }
 
     .container {
-      max-width: 900px;
-      margin: 40px auto;
+      max-width: 800px;
+      margin: auto;
       background: #fff;
-      padding: 30px 40px;
+      padding: 30px;
       border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
     }
 
     h1 {
       text-align: center;
       color: #2c3e50;
-      margin-bottom: 30px;
     }
 
     label {
-      font-weight: 600;
+      font-weight: bold;
       display: block;
-      margin-top: 20px;
+      margin-top: 15px;
     }
 
     input {
       width: 100%;
-      padding: 12px;
+      padding: 10px;
       font-size: 16px;
-      margin-top: 8px;
-      border: 1px solid #ccc;
+      margin-top: 5px;
       border-radius: 8px;
+      border: 1px solid #ccc;
       box-sizing: border-box;
     }
 
     button {
-      margin-top: 30px;
+      margin-top: 25px;
       width: 100%;
-      background-color: #27ae60;
+      background-color: #3498db;
       color: white;
-      padding: 15px;
+      padding: 14px;
       font-size: 16px;
-      font-weight: bold;
       border: none;
       border-radius: 10px;
       cursor: pointer;
-      transition: background 0.3s ease;
     }
 
     button:hover {
-      background-color: #1e8449;
+      background-color: #2980b9;
     }
 
     #plot {
-      margin-top: 40px;
-      height: 650px;
-    }
-
-    .footer {
-      text-align: center;
-      color: #999;
-      font-size: 14px;
-      margin-top: 40px;
+      margin-top: 30px;
+      height: 600px;
     }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <h1>Visualizador 3D de Sistemas de Desigualdades</h1>
+    <h1>Sistema de 3 Desigualdades en 2 Variables</h1>
 
-    <label for="ineq1">Primera desigualdad (ej: x + y + z &lt;= 10):</label>
-    <input type="text" id="ineq1" value="x + y + z <= 10">
+    <label for="ineq1">Desigualdad 1 (ej: x + y &lt;= 7):</label>
+    <input type="text" id="ineq1" value="x + y <= 7">
 
-    <label for="ineq2">Segunda desigualdad (ej: x - y + 2*z &gt;= 0):</label>
-    <input type="text" id="ineq2" value="x - y + 2*z >= 0">
+    <label for="ineq2">Desigualdad 2 (ej: x - y &gt;= 1):</label>
+    <input type="text" id="ineq2" value="x - y >= 1">
 
-    <button onclick="graficar3D()">Graficar Región de Solución</button>
+    <label for="ineq3">Desigualdad 3 (ej: x &gt;= 0):</label>
+    <input type="text" id="ineq3" value="x >= 0">
+
+    <button onclick="graficar()">Graficar Región de Solución</button>
 
     <div id="plot"></div>
-
-    <div class="footer">Hecho por Fabricio con Plotly.js y HTML5 — 2025</div>
   </div>
 
   <script>
-    function parseInequality(expression) {
-      const parts = expression.match(/(.+?)(<=|>=|<|>)(.+)/);
+    function parseInequality(expr) {
+      const parts = expr.match(/(.+?)(<=|>=|<|>)(.+)/);
       if (!parts) return null;
       return {
         left: parts[1].trim(),
@@ -103,84 +94,75 @@
       };
     }
 
-    function evaluateInequality(x, y, z, inequality) {
+    function evalInequality(x, y, ineq) {
       try {
-        const left = inequality.left.replace(/x/g, `(${x})`)
-                                    .replace(/y/g, `(${y})`)
-                                    .replace(/z/g, `(${z})`);
-        const right = inequality.right.replace(/x/g, `(${x})`)
-                                      .replace(/y/g, `(${y})`)
-                                      .replace(/z/g, `(${z})`);
-        return eval(`${eval(left)} ${inequality.op} ${eval(right)}`);
+        const L = Function("x", "y", `return ${ineq.left}`)(x, y);
+        const R = Function("x", "y", `return ${ineq.right}`)(x, y);
+        switch (ineq.op) {
+          case "<=": return L <= R;
+          case ">=": return L >= R;
+          case "<": return L < R;
+          case ">": return L > R;
+        }
       } catch {
         return false;
       }
     }
 
-    function graficar3D() {
-      const expr1 = document.getElementById('ineq1').value;
-      const expr2 = document.getElementById('ineq2').value;
+    function graficar() {
+      const ineqs = [
+        parseInequality(document.getElementById("ineq1").value),
+        parseInequality(document.getElementById("ineq2").value),
+        parseInequality(document.getElementById("ineq3").value)
+      ];
 
-      const ineq1 = parseInequality(expr1);
-      const ineq2 = parseInequality(expr2);
-
-      if (!ineq1 || !ineq2) {
-        alert("Por favor ingresa dos desigualdades válidas.");
+      if (ineqs.includes(null)) {
+        alert("Por favor ingresa desigualdades válidas.");
         return;
       }
 
-      const xVals = [], yVals = [], zVals = [];
+      const x = [], y = [];
+      const min = -10, max = 10, step = 0.25;
 
-      const rangeMin = -5, rangeMax = 5, step = 0.5;
-
-      for (let x = rangeMin; x <= rangeMax; x += step) {
-        for (let y = rangeMin; y <= rangeMax; y += step) {
-          for (let z = rangeMin; z <= rangeMax; z += step) {
-            if (evaluateInequality(x, y, z, ineq1) && evaluateInequality(x, y, z, ineq2)) {
-              xVals.push(x);
-              yVals.push(y);
-              zVals.push(z);
-            }
+      for (let xi = min; xi <= max; xi += step) {
+        for (let yi = min; yi <= max; yi += step) {
+          if (ineqs.every(ineq => evalInequality(xi, yi, ineq))) {
+            x.push(xi);
+            y.push(yi);
           }
         }
       }
 
-      if (xVals.length === 0) {
-        alert("No se encontró región solución. Intenta con otras desigualdades.");
-        Plotly.purge('plot');
+      if (x.length === 0) {
+        alert("No se encontró solución. Cambia las desigualdades.");
+        Plotly.purge("plot");
         return;
       }
 
       const trace = {
-        x: xVals,
-        y: yVals,
-        z: zVals,
-        mode: 'markers',
-        type: 'scatter3d',
-        name: 'Solución',
+        x: x,
+        y: y,
+        mode: "markers",
+        type: "scatter",
+        name: "Región común",
         marker: {
-          color: 'rgba(39, 174, 96, 0.6)',
-          size: 3,
-          symbol: 'circle'
+          color: "rgba(46, 204, 113, 0.6)",
+          size: 4
         }
       };
 
       const layout = {
-        title: `Región común en 3D`,
-        scene: {
-          xaxis: { title: 'x', backgroundcolor: '#f9f9f9' },
-          yaxis: { title: 'y', backgroundcolor: '#f9f9f9' },
-          zaxis: { title: 'z', backgroundcolor: '#f9f9f9' },
-        },
-        paper_bgcolor: '#ffffff',
-        margin: { l: 0, r: 0, b: 0, t: 50 }
+        title: "Región solución del sistema",
+        xaxis: { title: "x", zeroline: true, gridcolor: "#ccc" },
+        yaxis: { title: "y", zeroline: true, gridcolor: "#ccc" },
+        plot_bgcolor: "#f9f9f9",
+        paper_bgcolor: "#ffffff",
+        showlegend: false
       };
 
-      Plotly.newPlot('plot', [trace], layout, { responsive: true });
+      Plotly.newPlot("plot", [trace], layout, { responsive: true });
     }
   </script>
 
 </body>
 </html>
-
-    
