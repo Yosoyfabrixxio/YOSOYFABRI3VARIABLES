@@ -499,7 +499,7 @@
       html += <h4>Variables</h4><ul>;
       p.variables.forEach((v, i) => { html += <li><code>${v}</code> · coef. objetivo = ${p.objetivo.coefficients[i] ?? 0}</li>; });
       html += </ul><h4>Restricciones</h4><ol>;
-      p.restricciones.forEach(r => { html += `<li>${r.coefficients.map((c, i) => ${c}${p.variables[i] || 's'}).join(' + ')} ${r.sign} ${r.value} <span class="muted">(${r.text || ''})</span></li>`; });
+      p.restricciones.forEach(r => { html += <li>${r.coefficients.map((c, i) => ${c}${p.variables[i] || 's'}).join(' + ')} ${r.sign} ${r.value} <span class="muted">(${r.text || ''})</span></li>; });
       html += </ol></div>;
       document.getElementById('interp').innerHTML = html;
     }
